@@ -3,6 +3,7 @@
 
 ## 架构
 ### web界面(web)
+    UI展示
 ### 控制端后台(task)
 #### 对web界面提供：  
     任务管理、任务新增、任务删除 接口  
@@ -20,6 +21,6 @@
     提供docker container list 功能  
     提供docker container kill 功能  
 ### 客户端上报程序(container)
-和具体程序相关??
+    和具体程序相关??
 ### 数据流
-web <==> task <==> node/container
+    web <==> task <==> node/container
