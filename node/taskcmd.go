@@ -5,7 +5,6 @@ import (
 	"context"
 
 	"github.com/docker/docker/api/types"
-	"github.com/docker/docker/api/types/container"
 	containertypes "github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/mount"
 	"github.com/docker/docker/client"
@@ -68,7 +67,7 @@ func (cmd *DockerCmd) CreateContainer(imageUrl string, ContainerCmd []string, vo
 	}
 	defer cli.Close()
 
-	hostConfig := &container.HostConfig{}
+	hostConfig := &containertypes.HostConfig{}
 	for k, v := range volumeMounts {
 		mountInfo := mount.Mount{
 			Type:   mount.TypeBind,
@@ -78,7 +77,7 @@ func (cmd *DockerCmd) CreateContainer(imageUrl string, ContainerCmd []string, vo
 		hostConfig.Mounts = append(hostConfig.Mounts, mountInfo)
 	}
 
-	createResp, err := cli.ContainerCreate(ctx, &container.Config{
+	createResp, err := cli.ContainerCreate(ctx, &containertypes.Config{
 		Image: imageUrl,
 		Cmd:   ContainerCmd,
 	}, hostConfig, nil, nil, "")
