@@ -10,18 +10,24 @@ import (
 
 type NodeTaskInfo struct {
 	TaskInfo
-	RealStatus   string
-	RealStart    time.Time
-	RealEnd      time.Time
-	RealNodeInfo string
+	RealStatus          string            `json:"realStatus"`
+	RealStart           time.Time         `json:"realStart"`
+	RealEnd             time.Time         `json:"realEnd"`
+	RealNodeVolumes     map[string]string `json:"realVolumes"`
+	RealNodeContainerId string            `json:"realContainerId"`
+}
+
+type TaskVolumeStruct struct {
+	ServerPath string `json:"serverpath"`
+	DestPath   string `json:"destpath"`
 }
 
 type TaskParameter struct {
-	TaskImageName  string `json:"taskImageName"`
-	TaskHostMode   string `json:"taskHostMode"`
-	TaskEnv        string `json:"taskEnv"`
-	TaskCmd        string `json:"taskCmd"`
-	TaskVolumeFile string `json:"taskVolumeFile"`
+	TaskImageName string             `json:"taskImageName"`
+	TaskHostMode  string             `json:"taskHostMode"`
+	TaskEnv       string             `json:"taskEnv"`
+	TaskCmd       []string           `json:"taskCmd"`
+	TaskVolume    []TaskVolumeStruct `json:"taskVolume"`
 }
 
 type TaskInfo struct {
