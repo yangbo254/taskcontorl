@@ -14,6 +14,49 @@ type NodeTaskMgr struct {
 	endTaskList     map[uint]model.NodeTaskInfo
 }
 
+func NewNodeTaskMgr() *NodeTaskMgr {
+	mgr := &NodeTaskMgr{
+		waitlocker:      &sync.Mutex{},
+		waitTaskList:    make(map[uint]model.NodeTaskInfo),
+		runningTaskList: make(map[uint]model.NodeTaskInfo),
+		endTaskList:     make(map[uint]model.NodeTaskInfo),
+	}
+	return mgr
+}
+
+func (mgr *NodeTaskMgr) Run() {
+
+	lastTryAddTask := time.Now()
+	lastLoop := time.Now()
+
+	for {
+		now := time.Now()
+		if now.After(lastTryAddTask.Add(time.Second * 30)) {
+			mgr.TryAddTask()
+		}
+		if now.After(lastLoop.Add(time.Second * 5)) {
+			mgr.LoopTask()
+		}
+		time.Sleep(time.Millisecond * 100)
+	}
+}
+
+func (mgr *NodeTaskMgr) TryAddTask() error {
+	tasks, err := NewNodeUtilDefault().GetTask()
+	if err != nil {
+		return err
+	}
+
+	mgr.waitlocker.Lock()
+	for _, v := range tasks {
+		if _, found := mgr.waitTaskList[v.ID]; !found {
+			mgr.waitTaskList[v.ID] = model.NodeTaskInfo{TaskInfo: v}
+		}
+	}
+	mgr.waitlocker.Unlock()
+	return nil
+}
+
 func (mgr *NodeTaskMgr) LoopTask() {
 	// 遍历等待队列，修改status
 	mgr.waitlocker.Lock()
@@ -81,12 +124,15 @@ func (mgr *NodeTaskMgr) LoopTask() {
 			mgr.endTaskList[v.ID] = v
 			delete(mgr.runningTaskList, v.ID)
 		}
-
 	}
 
 	// 遍历结束队列，上报结束状态
-	//for _, v := range mgr.endTaskList {
-	// 上报v状态，移除自己
-	// to do
-	//}
+	for k, v := range mgr.endTaskList {
+		// 上报v状态，移除自己
+		err := NewNodeUtilDefault().ReportContainerEnd(v)
+		if err == nil {
+			delete(mgr.endTaskList, k)
+		}
+	}
+
 }

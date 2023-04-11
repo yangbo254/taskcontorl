@@ -36,25 +36,64 @@ func (node *NodeUtil) GetFile(files []model.TaskVolumeStruct) (map[string]string
 	return volumes, nil
 }
 
-func (node *NodeUtil) GetTask() error {
+func (node *NodeUtil) GetTask() ([]model.TaskInfo, error) {
 	url := node.baseUrl + "/node/gettask"
 	url += "?nodeid=" + "111"
 	resp, err := http.Get(url)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	defer resp.Body.Close()
 	bytes, _ := io.ReadAll(resp.Body)
 	var taskinfo []model.TaskInfo
 	err = json.Unmarshal(bytes, &taskinfo)
 	if err != nil {
+		return nil, err
+	}
+	return taskinfo, nil
+}
+
+// 上报任务状态
+func (node *NodeUtil) ReportContainerStats(obj interface{}) error {
+	url := node.baseUrl + "/report/container/stat"
+	bytesData, _ := json.Marshal(obj)
+	req, _ := http.NewRequest("POST", url, bytes.NewBuffer(bytesData))
+	req.Header.Set("X-Report-Ver", "report_container_stat_v1")
+	req.Header.Set("Content-Type", "application/json")
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
 		return err
 	}
+	defer resp.Body.Close()
+
+	fmt.Println("report system info response status:", resp.Status)
+	fmt.Println("report system info response headers:", resp.Header)
+	body, _ := io.ReadAll(resp.Body)
+	fmt.Println("report system info response body:", string(body))
 	return nil
 }
 
 // 上报任务状态
-func (node *NodeUtil) ReportTaskStats() error {
+func (node *NodeUtil) ReportContainerEnd(obj interface{}) error {
+	url := node.baseUrl + "/report/container/end"
+	bytesData, _ := json.Marshal(obj)
+	req, _ := http.NewRequest("POST", url, bytes.NewBuffer(bytesData))
+	req.Header.Set("X-Report-Ver", "report_container_end_v1")
+	req.Header.Set("Content-Type", "application/json")
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	fmt.Println("report container end info response status:", resp.Status)
+	fmt.Println("report container end info response headers:", resp.Header)
+	body, _ := io.ReadAll(resp.Body)
+	fmt.Println("report container end info response body:", string(body))
 	return nil
 }
 
