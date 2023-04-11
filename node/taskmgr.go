@@ -2,6 +2,7 @@ package node
 
 import (
 	"log"
+	"main/config"
 	"main/model"
 	"sync"
 	"time"
@@ -25,17 +26,22 @@ func NewNodeTaskMgr() *NodeTaskMgr {
 }
 
 func (mgr *NodeTaskMgr) Run() {
-
-	lastTryAddTask := time.Now()
-	lastLoop := time.Now()
+	begin := time.Now()
+	lastTryAddTask := begin
+	lastLoop := begin
+	lastTryKillTask := begin
+	conf := config.NewConfig(config.NODEMODE)
 
 	for {
 		now := time.Now()
-		if now.After(lastTryAddTask.Add(time.Second * 30)) {
+		if now.After(lastTryAddTask.Add(time.Second * time.Duration(conf.Client.TryGetTaskTime))) {
 			mgr.TryAddTask()
 		}
-		if now.After(lastLoop.Add(time.Second * 5)) {
+		if now.After(lastLoop.Add(time.Second * time.Duration(conf.Client.LoopTime))) {
 			mgr.LoopTask()
+		}
+		if now.After(lastTryKillTask.Add(time.Second * time.Duration(conf.Client.KillTaskTime))) {
+			mgr.TryKillTask()
 		}
 		time.Sleep(time.Millisecond * 100)
 	}
@@ -47,13 +53,38 @@ func (mgr *NodeTaskMgr) TryAddTask() error {
 		return err
 	}
 
-	mgr.waitlocker.Lock()
-	for _, v := range tasks {
-		if _, found := mgr.waitTaskList[v.ID]; !found {
-			mgr.waitTaskList[v.ID] = model.NodeTaskInfo{TaskInfo: v}
+	if len(tasks) != 0 {
+		mgr.waitlocker.Lock()
+		for _, v := range tasks {
+			if _, found := mgr.waitTaskList[v.ID]; !found {
+				mgr.waitTaskList[v.ID] = model.NodeTaskInfo{TaskInfo: v}
+			}
 		}
+		mgr.waitlocker.Unlock()
 	}
-	mgr.waitlocker.Unlock()
+	return nil
+}
+
+func (mgr *NodeTaskMgr) TryKillTask() error {
+	tasks, err := NewNodeUtilDefault().GetKillTask()
+	if err != nil {
+		return err
+	}
+
+	if len(tasks) != 0 {
+		mgr.waitlocker.Lock()
+		for _, v := range tasks {
+			// fixed SCC-S1033
+			delete(mgr.waitTaskList, v)
+
+			if vv, found := mgr.runningTaskList[v]; found {
+				NewDockerCmd().StopContainer(vv.RealNodeContainerId, true)
+				NewDockerCmd().RmContainer(vv.RealNodeContainerId)
+				delete(mgr.runningTaskList, v)
+			}
+		}
+		mgr.waitlocker.Unlock()
+	}
 	return nil
 }
 
@@ -109,7 +140,7 @@ func (mgr *NodeTaskMgr) LoopTask() {
 			v.RealStatus = vv.State
 			if vv.State == "exited" {
 				// 任务结束，移入结束队列
-				NewDockerCmd().RmContainer(vv.ID)
+				NewDockerCmd().RmContainer(v.RealNodeContainerId)
 				v.RealEnd = time.Now()
 				mgr.endTaskList[v.ID] = v
 				delete(mgr.runningTaskList, v.ID)

@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"main/config"
 	"main/model"
 	"net/http"
 	"os"
@@ -17,7 +18,8 @@ type NodeUtil struct {
 }
 
 func NewNodeUtilDefault() *NodeUtil {
-	return &NodeUtil{baseUrl: ""}
+	conf := config.NewConfig(config.NODEMODE)
+	return NewNodeUtil(conf.Client.ServerUrl)
 }
 
 func NewNodeUtil(url string) *NodeUtil {
@@ -37,8 +39,9 @@ func (node *NodeUtil) GetFile(files []model.TaskVolumeStruct) (map[string]string
 }
 
 func (node *NodeUtil) GetTask() ([]model.TaskInfo, error) {
+	conf := config.NewConfig(config.NODEMODE)
 	url := node.baseUrl + "/node/gettask"
-	url += "?nodeid=" + "111"
+	url += "?nodeid=" + conf.Client.NodeId
 	resp, err := http.Get(url)
 	if err != nil {
 		return nil, err
@@ -53,9 +56,29 @@ func (node *NodeUtil) GetTask() ([]model.TaskInfo, error) {
 	return taskinfo, nil
 }
 
+func (node *NodeUtil) GetKillTask() ([]uint, error) {
+	conf := config.NewConfig(config.NODEMODE)
+	url := node.baseUrl + "/node/getkill"
+	url += "?nodeid=" + conf.Client.NodeId
+	resp, err := http.Get(url)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+	bytes, _ := io.ReadAll(resp.Body)
+	var taskinfo []uint
+	err = json.Unmarshal(bytes, &taskinfo)
+	if err != nil {
+		return nil, err
+	}
+	return taskinfo, nil
+}
+
 // 上报任务状态
 func (node *NodeUtil) ReportContainerStats(obj interface{}) error {
+	conf := config.NewConfig(config.NODEMODE)
 	url := node.baseUrl + "/report/container/stat"
+	url += "?nodeid=" + conf.Client.NodeId
 	bytesData, _ := json.Marshal(obj)
 	req, _ := http.NewRequest("POST", url, bytes.NewBuffer(bytesData))
 	req.Header.Set("X-Report-Ver", "report_container_stat_v1")
@@ -77,7 +100,9 @@ func (node *NodeUtil) ReportContainerStats(obj interface{}) error {
 
 // 上报任务状态
 func (node *NodeUtil) ReportContainerEnd(obj interface{}) error {
+	conf := config.NewConfig(config.NODEMODE)
 	url := node.baseUrl + "/report/container/end"
+	url += "?nodeid=" + conf.Client.NodeId
 	bytesData, _ := json.Marshal(obj)
 	req, _ := http.NewRequest("POST", url, bytes.NewBuffer(bytesData))
 	req.Header.Set("X-Report-Ver", "report_container_end_v1")
@@ -101,7 +126,9 @@ func (node *NodeUtil) ReportContainerEnd(obj interface{}) error {
 func (node *NodeUtil) ReportSystemInfo() error {
 	systeminfo := &SystemInfo{}
 	systeminfo.GetInfo()
+	conf := config.NewConfig(config.NODEMODE)
 	url := node.baseUrl + "/report/system"
+	url += "?nodeid=" + conf.Client.NodeId
 	req, _ := http.NewRequest("POST", url, bytes.NewBuffer([]byte(systeminfo.String())))
 	req.Header.Set("X-Report-Ver", "report_sys_v1")
 	req.Header.Set("Content-Type", "application/json")
