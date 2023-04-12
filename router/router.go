@@ -30,7 +30,15 @@ func RunRouter() {
 	})
 	apiBackend := router.Group("/api/node")
 	{
+		apiBackend.GET("/downloadfile", handleRouter.handleBackendDownloadFile)
 		apiBackend.GET("/gettask", handleRouter.handleBackendGetTask)
+		apiBackend.GET("/getkill", handleRouter.handleBackendKillTask)
+	}
+	apiReport := router.Group("/api/report")
+	{
+		apiReport.POST("/system", handleRouter.handleBackendGetTask)
+		apiReport.POST("/container/stat", handleRouter.handleBackendDownloadFile)
+		apiReport.POST("/container/end", handleRouter.handleBackendGetTask)
 	}
 	apiWeb := router.Group("/api/web")
 	{
@@ -110,6 +118,21 @@ func (router *RouterEngine) handleWebListTask(c *gin.Context) {
 	router.returnMessage(c, tasks)
 }
 
+func (router *RouterEngine) handleBackendDownloadFile(c *gin.Context) {
+	FileId := c.Query("fileid")
+	if FileId == "" {
+		router.returnError(c, 1, "query param error", nil)
+		return
+	}
+	fileInfo, err := task.NewTask().FindFileInfo(FileId)
+	if err != nil {
+		router.returnError(c, 2, err.Error(), nil)
+		return
+	}
+
+	c.File(fileInfo.Path)
+}
+
 func (router *RouterEngine) handleBackendGetTask(c *gin.Context) {
 	nodeId := c.Query("nodeid")
 	if nodeId == "" {
@@ -130,4 +153,13 @@ func (router *RouterEngine) handleBackendGetTask(c *gin.Context) {
 		}
 	}
 	router.returnMessage(c, result)
+}
+
+func (router *RouterEngine) handleBackendKillTask(c *gin.Context) {
+	nodeId := c.Query("nodeid")
+	if nodeId == "" {
+		router.returnError(c, 1, "query param error", nil)
+		return
+	}
+
 }
