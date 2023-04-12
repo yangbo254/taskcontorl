@@ -58,7 +58,7 @@ func (node *NodeUtil) GetTask() ([]model.TaskInfo, error) {
 
 func (node *NodeUtil) GetKillTask() ([]uint, error) {
 	conf := config.NewConfig(config.NODEMODE)
-	url := node.baseUrl + "/node/getkill"
+	url := node.baseUrl + "/api/node/getkill"
 	url += "?nodeid=" + conf.Client.NodeId
 	resp, err := http.Get(url)
 	if err != nil {
@@ -148,7 +148,7 @@ func (node *NodeUtil) ReportSystemInfo() error {
 }
 
 func (node *NodeUtil) downloadFile(filename string) (string, error) {
-	url := node.baseUrl + "/node/downloadfile"
+	url := node.baseUrl + "/api/node/downloadfile"
 	url += "?fileid=" + filename
 	resp, err := http.Get(url)
 	if err != nil {

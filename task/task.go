@@ -30,6 +30,12 @@ func (task *Task) AddFileInfo(name, origName, path string, size int64) error {
 	return result.Error
 }
 
+func (task *Task) FindFileInfo(fileName string) (model.FileInfo, error) {
+	var fileInfo model.FileInfo
+	result := task.db.Where("currentname = '?'", fileName).Order("id desc").First(&fileInfo)
+	return fileInfo, result.Error
+}
+
 func (task *Task) ListFileInfo() ([]model.FileInfo, error) {
 	var fileList []model.FileInfo
 	result := task.db.Order("id desc").Find(&fileList)
