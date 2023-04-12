@@ -17,9 +17,9 @@ const (
 
 type ClientConfig struct {
 	ServerUrl      string `yaml:"url"`
-	TryGetTaskTime int    `yaml:"getTaskTime"`
-	LoopTime       int    `yaml:"loopTaskTime"`
-	KillTaskTime   int    `yaml:"killTaskTime"`
+	TryGetTaskTime int64  `yaml:"getTaskTime"`
+	LoopTime       int64  `yaml:"loopTaskTime"`
+	KillTaskTime   int64  `yaml:"killTaskTime"`
 	NodeId         string `yaml:"nodeId"`
 }
 
@@ -54,6 +54,13 @@ func NewConfig(mode RunningMode) *Set {
 				return &Setting
 			}
 			Setting.Client.NodeId = uuidValue.String()
+			byteData, _ := yaml.Marshal(Setting)
+			_ = os.WriteFile(filePath, byteData, os.ModePerm)
+			return &Setting
+		}
+
+		if mode == SRVMODE && Setting.Server.UploadFilePath == "" {
+			Setting.Server.UploadFilePath = "./upload/"
 			byteData, _ := yaml.Marshal(Setting)
 			_ = os.WriteFile(filePath, byteData, os.ModePerm)
 			return &Setting

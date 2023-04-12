@@ -40,7 +40,7 @@ func (node *NodeUtil) GetFile(files []model.TaskVolumeStruct) (map[string]string
 
 func (node *NodeUtil) GetTask() ([]model.TaskInfo, error) {
 	conf := config.NewConfig(config.NODEMODE)
-	url := node.baseUrl + "/node/gettask"
+	url := node.baseUrl + "/api/node/gettask"
 	url += "?nodeid=" + conf.Client.NodeId
 	resp, err := http.Get(url)
 	if err != nil {

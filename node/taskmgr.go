@@ -26,22 +26,25 @@ func NewNodeTaskMgr() *NodeTaskMgr {
 }
 
 func (mgr *NodeTaskMgr) Run() {
-	begin := time.Now()
+	begin := time.Now().Unix()
 	lastTryAddTask := begin
 	lastLoop := begin
 	lastTryKillTask := begin
 	conf := config.NewConfig(config.NODEMODE)
 
 	for {
-		now := time.Now()
-		if now.After(lastTryAddTask.Add(time.Second * time.Duration(conf.Client.TryGetTaskTime))) {
+		now := time.Now().Unix()
+		if lastTryAddTask+conf.Client.TryGetTaskTime < now {
 			mgr.TryAddTask()
+			lastTryAddTask = now
 		}
-		if now.After(lastLoop.Add(time.Second * time.Duration(conf.Client.LoopTime))) {
+		if lastLoop+conf.Client.LoopTime < now {
 			mgr.LoopTask()
+			lastLoop = now
 		}
-		if now.After(lastTryKillTask.Add(time.Second * time.Duration(conf.Client.KillTaskTime))) {
+		if lastTryKillTask+conf.Client.KillTaskTime < now {
 			mgr.TryKillTask()
+			lastTryKillTask = now
 		}
 		time.Sleep(time.Millisecond * 100)
 	}
@@ -111,7 +114,7 @@ func (mgr *NodeTaskMgr) LoopTask() {
 			// 切换状态为等待
 			v.RealStatus = "wait"
 		} else if v.RealStatus == "wait" {
-			if time.Now().After(v.Start) {
+			if time.Now().Unix() >= v.Start {
 				// 切换任务到运行队列
 				containerId, err := NewDockerCmd().CreateContainer(v.TaskImageName, v.TaskCmd, v.RealNodeVolumes)
 				if err != nil {
@@ -119,7 +122,7 @@ func (mgr *NodeTaskMgr) LoopTask() {
 					delete(mgr.waitTaskList, v.ID)
 				}
 				v.RealNodeContainerId = containerId
-				v.RealStart = time.Now()
+				v.RealStart = time.Now().Unix()
 				// swap map
 				mgr.runningTaskList[v.ID] = v
 				delete(mgr.waitTaskList, v.ID)
@@ -141,7 +144,7 @@ func (mgr *NodeTaskMgr) LoopTask() {
 			if vv.State == "exited" {
 				// 任务结束，移入结束队列
 				NewDockerCmd().RmContainer(v.RealNodeContainerId)
-				v.RealEnd = time.Now()
+				v.RealEnd = time.Now().Unix()
 				mgr.endTaskList[v.ID] = v
 				delete(mgr.runningTaskList, v.ID)
 			} else {
@@ -151,7 +154,7 @@ func (mgr *NodeTaskMgr) LoopTask() {
 			// v未找到，移入结束队列
 			v.RealStatus = "not found"
 			NewDockerCmd().RmContainer(v.RealNodeContainerId)
-			v.RealEnd = time.Now()
+			v.RealEnd = time.Now().Unix()
 			mgr.endTaskList[v.ID] = v
 			delete(mgr.runningTaskList, v.ID)
 		}

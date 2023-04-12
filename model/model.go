@@ -3,7 +3,6 @@ package model
 import (
 	"database/sql/driver"
 	"encoding/json"
-	"time"
 
 	"gorm.io/gorm"
 )
@@ -11,8 +10,8 @@ import (
 type NodeTaskInfo struct {
 	TaskInfo
 	RealStatus          string            `json:"realStatus"`
-	RealStart           time.Time         `json:"realStart"`
-	RealEnd             time.Time         `json:"realEnd"`
+	RealStart           int64             `json:"realStart"`
+	RealEnd             int64             `json:"realEnd"`
 	RealNodeVolumes     map[string]string `json:"realVolumes"`
 	RealNodeContainerId string            `json:"realContainerId"`
 }
@@ -32,10 +31,18 @@ type TaskParameter struct {
 
 type TaskInfo struct {
 	gorm.Model
-	Name  string    `json:"name"`
-	Start time.Time `json:"start"`
-	Nodes NodeList  `json:"nodes"`
+	Name  string   `json:"name"`
+	Start int64    `json:"start"`
+	Nodes NodeList `json:"nodes"`
 	TaskParameter
+}
+
+type FileInfo struct {
+	gorm.Model
+	CurrentName  string `json:"currentName"`
+	OriginalName string `json:"originalName"`
+	Path         string `json:"path"`
+	FileSize     int64  `json:"size"`
 }
 
 type NodeList []string
