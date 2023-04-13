@@ -27,6 +27,14 @@ func (task *Task) AddGroup(name string) error {
 	return result.Error
 }
 
+func (task *Task) DelGroup(groupid uint) {
+	task.db.Delete(&model.Group{}, groupid)
+}
+
+func (task *Task) ChangeGroup(groupid uint, name string) {
+	task.db.Model(&model.Group{}).Where("id = ?", groupid).Update("name", name)
+}
+
 func (task *Task) ListGroup() ([]model.Group, error) {
 	var groupList []model.Group
 	result := task.db.Order("id desc").Find(&groupList)
