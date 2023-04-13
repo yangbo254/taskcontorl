@@ -20,5 +20,8 @@ func (task *Task) AutoInit() (err error) {
 
 	task.db.AutoMigrate(&model.TaskInfo{})
 	task.db.AutoMigrate(&model.FileInfo{})
+	task.db.AutoMigrate(&model.NodeInfo{})
+	task.db.AutoMigrate(&model.Group{})
+
 	return nil
 }

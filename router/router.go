@@ -36,9 +36,9 @@ func RunRouter() {
 	}
 	apiReport := router.Group("/api/report")
 	{
-		apiReport.POST("/system", handleRouter.handleBackendGetTask)
-		apiReport.POST("/container/stat", handleRouter.handleBackendDownloadFile)
-		apiReport.POST("/container/end", handleRouter.handleBackendGetTask)
+		apiReport.POST("/system/online", handleRouter.handleReportSysOnline)
+		apiReport.POST("/container/stat", handleRouter.handleReportContainerStat)
+		apiReport.POST("/container/end", handleRouter.handleReportContainerEnd)
 	}
 	apiWeb := router.Group("/api/web")
 	{
@@ -49,10 +49,24 @@ func RunRouter() {
 
 		apiWeb.POST("/uploadfile", handleRouter.handleWebUpdateFile)
 		apiWeb.GET("/listfiles", handleRouter.handleWebListFiles)
+
+		apiWeb.GET("/listgroup", handleRouter.handleWebListGroup)
+		apiWeb.GET("/addgroup", handleRouter.handleWebAddGroup)
+		apiWeb.GET("/changegroup", handleRouter.handleWebChangeGroup)
+		apiWeb.GET("/delgroup", handleRouter.handleWebDelGroup)
 	}
 
 	route.Run() // listen and serve on 0.0.0.0:8080 (for windows "localhost:8080")
 }
+
+func (router *RouterEngine) handleWebListGroup(c *gin.Context)   {}
+func (router *RouterEngine) handleWebAddGroup(c *gin.Context)    {}
+func (router *RouterEngine) handleWebDelGroup(c *gin.Context)    {}
+func (router *RouterEngine) handleWebChangeGroup(c *gin.Context) {}
+
+func (router *RouterEngine) handleReportSysOnline(c *gin.Context)     {}
+func (router *RouterEngine) handleReportContainerStat(c *gin.Context) {}
+func (router *RouterEngine) handleReportContainerEnd(c *gin.Context)  {}
 
 func (router *RouterEngine) returnError(c *gin.Context, code int, msg string, obj interface{}) {
 	c.JSON(http.StatusBadRequest, NewMessageUtil().BuildErrorMessage(code, msg, obj))

@@ -45,6 +45,18 @@ type FileInfo struct {
 	FileSize     int64  `json:"size"`
 }
 
+type NodeInfo struct {
+	gorm.Model
+	NodeId   string `json:"nodeid"` //节点名称
+	Name     string `json:"name"`   // 备注名称
+	GroupIds []uint `json:"groupids"`
+}
+
+type Group struct {
+	gorm.Model
+	Name string `json:"name"`
+}
+
 type NodeList []string
 
 // gorm 自定义结构需要实现 Value Scan 两个方法

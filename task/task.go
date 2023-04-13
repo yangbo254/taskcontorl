@@ -19,6 +19,20 @@ func NewTask() *Task {
 	return gTask
 }
 
+func (task *Task) AddGroup(name string) error {
+	groupInfo := model.Group{
+		Name: name,
+	}
+	result := task.db.Create(&groupInfo)
+	return result.Error
+}
+
+func (task *Task) ListGroup() ([]model.Group, error) {
+	var groupList []model.Group
+	result := task.db.Order("id desc").Find(&groupList)
+	return groupList, result.Error
+}
+
 func (task *Task) AddFileInfo(name, origName, path string, size int64) error {
 	fileInfo := model.FileInfo{
 		CurrentName:  name,
