@@ -54,7 +54,7 @@ type NodeInfo struct {
 
 type Group struct {
 	gorm.Model
-	Name string `json:"name"`
+	Name string `json:"name" gorm:"uniqueIndex"`
 }
 
 type NodeList []string
